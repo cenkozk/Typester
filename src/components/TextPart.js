@@ -10,7 +10,7 @@ export default function TextPart() {
     margin: "0px",
     userSelect: "none",
     webkitUserSelect: "none",
-    opacity: "75%",
+    opacity: "40%",
     fontFamily: "Source Code Pro",
     fontStyle: "normal",
     fontWeight: "500",
@@ -45,7 +45,7 @@ export default function TextPart() {
   letters.forEach((element) => {
     var reMappedLetters = element.map((letter) => <letter style={{ ...fontStyle }}>{letter}</letter>);
     LettersToRender.push(
-      <Box item sx={{ margin: "0px", height: "30px" }}>
+      <Box item id={`${letters.indexOf(element)}word`} sx={{ margin: "0px", height: "30px" }}>
         {reMappedLetters}
       </Box>
     );
@@ -56,22 +56,41 @@ export default function TextPart() {
   const refGrid = React.useRef();
   const refIndex = React.useRef();
 
-  const indexOfIndex = React.useRef(14.41);
-  var indexOfWord = 0;
-  var indexOfWordInARow = 0;
-  var currentWord = LettersToRender[0];
+  const indexOfIndex = React.useRef(0);
+  const indexOfWord = React.useRef(0);
+  const nextRow = React.useRef(0);
+  const linesPassed = React.useRef(1);
 
-  function scrollText() {
-    //refScroll.current.scrollBy({ top: 38, behavior: "smooth" });
-    indexOfIndex.current = indexOfIndex.current + 14.41;
-    document.getElementById("indexer").style.marginLeft = `${indexOfIndex.current + "px"}`;
+  var currentWord = LettersToRender[0];
+  var currentLetter = currentWord.props.children[indexOfIndex.current].props.children;
+
+  React.useEffect(() => {
+    document.getElementById(`${indexOfWord.current}word`).prepend(refIndex.current);
+  }, []);
+
+  function moveToWord() {
+    document.getElementById(`${indexOfWord.current}word`).prepend(refIndex.current);
+    indexOfIndex.current = 0;
+    refIndex.current.style.marginLeft = `${indexOfIndex.current * 14.41 + "px"}`;
   }
 
+  function scrollText() {
+    refGrid.current.scrollBy({ top: 40, behavior: "smooth" });
+  }
+
+  function moveIndex() {
+    indexOfIndex.current = indexOfIndex.current + 1;
+    refIndex.current.style.marginLeft = `${indexOfIndex.current * 14.41 + "px"}`;
+    currentLetter = currentWord.props.children[indexOfIndex.current].props.children;
+    console.log(currentLetter);
+  }
+
+  const rowCalculation = React.useRef(0);
   function calculateWordsInARow() {
     var tempWidth = refGrid.current.getBoundingClientRect().width;
     var WordsInARow = 0;
     var tempPixels = 0;
-    for (let i = 0; i < LettersToRender.length; i++) {
+    for (let i = rowCalculation.current; i < LettersToRender.length; i++) {
       tempPixels += LettersToRender[i].props.children.length * 14.41 + 14.41;
       if (tempPixels < tempWidth) {
         WordsInARow++;
@@ -92,24 +111,49 @@ export default function TextPart() {
         return;
       }
 
-      console.log(calculateWordsInARow());
+      if (indexOfWord.current == nextRow.current - 1 + rowCalculation.current) {
+        console.log("next row!");
+        rowCalculation.current += calculateWordsInARow();
+        console.log(rowCalculation.current);
+        if (linesPassed.current == 2) {
+          linesPassed.current = 2;
+          scrollText();
+        } else {
+          linesPassed.current += 1;
+        }
+      }
 
       //Increment index and go to the next word.
-      indexOfWord++;
-      indexOfWordInARow++;
-      currentWord = LettersToRender[indexOfWord];
+      indexOfWord.current++;
+      currentWord = LettersToRender[indexOfWord.current];
+      moveToWord();
       refInput.current.value = "";
+      return;
     }
 
-    console.log(refIndex.current, currentWord);
-    //scrollText();
+    //If word ended handle it here.
+    if (currentWord.props.children.length - 1 == indexOfIndex.current) {
+      console.log("word ended");
+      refIndex.current.style.marginLeft = `${(indexOfIndex.current + 1) * 14.41 + "px"}`;
+      return;
+    }
+
+    nextRow.current = calculateWordsInARow();
+    console.log(nextRow.current, rowCalculation.current);
+    //Move index 1 increment.
+    moveIndex();
   }
 
   return (
     <div style={{ display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center" }}>
-      <div ref={refIndex} style={{ margin: "0px", width: "2px", height: "30px", position: "absolute", backgroundColor: "#B0C4B1" }} />
-      <input ref={refInput} autoFocus type="text" style={{ opacity: "100%", height: "20px" }} onKeyPress={handleAnswerChange} />
-      <Grid ref={refGrid} sx={{ width: "90%", maxWidth: "2000px", height: "113px", overflow: "auto", gap: "10px 14.41px" }} container className="text-container">
+      <input ref={refInput} autoFocus type="text" style={{ opacity: "0%", height: "20px" }} onKeyDown={handleAnswerChange} />
+      <Grid
+        ref={refGrid}
+        sx={{ position: "relative", width: "90%", maxWidth: "2000px", height: "113px", overflow: "auto", gap: "10px 14.41px" }}
+        container
+        className="text-container"
+      >
+        <div ref={refIndex} style={{ margin: "0px", width: "2px", height: "30px", position: "absolute", backgroundColor: "#B0C4B1" }} />
         {LettersToRender}
       </Grid>
     </div>
