@@ -1,9 +1,12 @@
 import { Box, Button, Grid, Typography } from "@mui/material";
 import { Stack, keyframes } from "@mui/system";
 import React from "react";
+const randomWords = require("random-words");
+const lerp = require("lerp");
 
 export default function TextPart() {
   const sourceCode = "'Source Code Pro', monospace";
+  const [lettersRandom, setLettersRandom] = React.useState(randomWords(30));
 
   //single letter is 15px
   const fontStyle = {
@@ -31,9 +34,7 @@ export default function TextPart() {
   
 `;
 
-  const writeText =
-    "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Fringilla urna porttitor rhoncus dolor purus non enim praesent elementum. Id semper risus in hendrerit gravida. Nascetur ridiculus mus mauris vitae ultricies leo integer malesuada. Interdum velit laoreet id donec ultrices tincidunt arcu non. Amet porttitor eget dolor morbi non arcu. Phasellus faucibus scelerisque eleifend donec pretium vulputate sapien nec sagittis. Gravida rutrum quisque non tellus orci ac auctor augue mauris. Aliquet enim tortor at auctor urna nunc id cursus. Integer eget aliquet nibh praesent tristique magna. Pellentesque dignissim enim sit amet. Quisque non tellus orci ac auctor. Tellus in metus vulputate eu scelerisque felis imperdiet proin. Viverra nam libero justo laoreet. Aliquet porttitor lacus luctus accumsan tortor posuere ac. Ac tincidunt vitae semper quis lectus nulla at volutpat. Aliquam id diam maecenas ultricies mi eget mauris pharetra. Tellus cras adipiscing enim eu turpis. Vitae congue eu consequat ac felis donec et. In iaculis nunc sed augue lacus viverra. Nibh mauris cursus mattis molestie a. Mauris cursus mattis molestie a iaculis at. Sollicitudin aliquam ultrices sagittis orci. Porttitor eget dolor morbi non arcu risus quis. Gravida cum sociis natoque penatibus et magnis dis. Eget nullam non nisi est sit amet facilisis magna.";
-  const writeArray = writeText.split(" ");
+  const writeArray = lettersRandom;
   var letters = [];
   var LettersToRender = [];
 
@@ -43,7 +44,7 @@ export default function TextPart() {
   });
 
   //Shuffle array
-  letters = letters.sort((a, b) => 0.5 - Math.random());
+  //letters = letters.sort((a, b) => 0.5 - Math.random());
 
   letters.forEach((element) => {
     var reMappedLetters = element.map((letter) => (
@@ -67,6 +68,7 @@ export default function TextPart() {
   const indexOfWord = React.useRef(0);
   const nextRow = React.useRef(0);
   const linesPassed = React.useRef(1);
+  const isWordEnded = React.useRef(false);
 
   var currentWord = LettersToRender[0];
   var currentLetter = currentWord.props.children[indexOfIndex.current];
@@ -105,12 +107,37 @@ export default function TextPart() {
     currentLetter = currentWord.props.children[indexOfIndex.current];
   }
 
+  function returnToWord() {
+    document.getElementById(`${indexOfWord.current}word`).prepend(refIndex.current);
+    indexOfIndex.current = 0;
+    currentLetter = currentWord.props.children[indexOfIndex.current];
+
+    //Move indexer to last word and then we'll set indexOfIndex to last word.
+    var letterHTML = document.getElementById(`${indexOfWord.current}word`).children[indexOfIndex.current + 1];
+    var parentElementHTML = letterHTML.parentElement;
+    // letterCountOnAWord has a index element so there is one more element.
+    var letterCountOnAWord = parentElementHTML.childElementCount;
+    indexOfIndex.current = letterCountOnAWord - 2;
+    refIndex.current.style.marginLeft = `${(indexOfIndex.current + 1) * 14.41 + "px"}`;
+
+    //Remove if there's underline
+    for (let i = 1; i < letterCountOnAWord; i++) {
+      parentElementHTML.children[i].style.textDecoration = "none";
+    }
+  }
+
   function scrollText() {
     refGrid.current.scrollBy({ top: 40, behavior: "smooth" });
   }
 
   function moveIndex() {
     indexOfIndex.current = indexOfIndex.current + 1;
+    refIndex.current.style.marginLeft = `${indexOfIndex.current * 14.41 + "px"}`;
+    currentLetter = currentWord.props.children[indexOfIndex.current];
+  }
+
+  function moveIndexBackwards() {
+    indexOfIndex.current = isWordEnded.current ? indexOfIndex.current : indexOfIndex.current - 1;
     refIndex.current.style.marginLeft = `${indexOfIndex.current * 14.41 + "px"}`;
     currentLetter = currentWord.props.children[indexOfIndex.current];
   }
@@ -134,10 +161,14 @@ export default function TextPart() {
   }
 
   function handleAnswerChange(event) {
+    console.log(indexOfIndex.current + 1);
     var letterHTML = document.getElementById(`${indexOfWord.current}word`).children[indexOfIndex.current + 1];
+    var parentElementHTML = letterHTML.parentElement;
+    // letterCountOnAWord has a index element so there is one more element.
+    var letterCountOnAWord = parentElementHTML.childElementCount;
 
     if (event.code == "Space") {
-      //If not any letter is written, don't accept the space input.
+      //If no letter is written, don't accept the space input.
       if (refInput.current.value === "" || refInput.current.value === " ") {
         refInput.current.value = "";
         return;
@@ -159,9 +190,6 @@ export default function TextPart() {
       }
 
       //If there's error in a word underline letters.
-      var parentElementHTML = letterHTML.parentElement;
-      //// letterCoundOnAWord has a index element so there is one more element.
-      var letterCountOnAWord = parentElementHTML.childElementCount;
       var tempTrues = 0;
       for (let i = 1; i < letterCountOnAWord; i++) {
         if (parentElementHTML.children[i].getAttribute("data-istrue") == "true") {
@@ -179,6 +207,7 @@ export default function TextPart() {
       }
 
       //Increment index and go to the next word.
+      isWordEnded.current = false;
       indexOfWord.current++;
       currentWord = LettersToRender[indexOfWord.current];
       moveToWord();
@@ -186,6 +215,29 @@ export default function TextPart() {
       return;
     }
 
+    if (event.code == "Backspace") {
+      //If we're on the first word return but go to the prevWord if it's not.
+      if (indexOfIndex.current + 1 == 1) {
+        if (indexOfWord.current == 0) return;
+
+        indexOfWord.current--;
+        currentWord = LettersToRender[indexOfWord.current];
+        //Becuase we're on the last letter make wordEnded true.
+        isWordEnded.current = true;
+        returnToWord();
+        return;
+      }
+
+      //Clear the prev letter's styling and value.
+      var prevLetter = isWordEnded.current
+        ? document.getElementById(`${indexOfWord.current}word`).children[indexOfIndex.current + 1]
+        : document.getElementById(`${indexOfWord.current}word`).children[indexOfIndex.current];
+      prevLetter.style.color = "#6e7779";
+      prevLetter.setAttribute("data-istrue", "false");
+      moveIndexBackwards();
+      isWordEnded.current = isWordEnded.current == true ? false : isWordEnded.current;
+      return;
+    }
     //Handle wrong and true key hit.
     if (event.key === currentLetter.props.children.toLowerCase()) {
       //Get the current word
@@ -198,6 +250,7 @@ export default function TextPart() {
     //If word ended handle it here.
     if (currentWord.props.children.length - 1 == indexOfIndex.current) {
       console.log("word ended");
+      isWordEnded.current = true;
       refIndex.current.style.marginLeft = `${(indexOfIndex.current + 1) * 14.41 + "px"}`;
       return;
     }
@@ -206,13 +259,16 @@ export default function TextPart() {
   }
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center" }}>
+    <div style={{ display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", marginBottom: "100px" }}>
       <input ref={refInput} autoFocus type="text" style={{ opacity: "0%", height: "20px" }} onKeyDown={handleAnswerChange} />
       <Grid
         ref={refGrid}
-        sx={{ position: "relative", width: "90%", maxWidth: "2000px", height: "113px", overflow: "auto", gap: "10px 14.41px" }}
+        columnGap={1.8}
+        rowGap={1.25}
+        sx={{ position: "relative", width: "90%", maxWidth: "1300px", height: "113px", overflow: "auto" }}
         container
         className="text-container"
+        alignItems="flex-start"
       >
         <div ref={refIndex} className="indexer" style={{ margin: "0px", width: "2px", height: "30px", position: "absolute", backgroundColor: "#B0C4B1" }} />
         {LettersToRender}
