@@ -6,11 +6,11 @@ const lerp = require("lerp");
 
 export default function TextPart() {
   const sourceCode = "'Source Code Pro', monospace";
-  const [lettersRandom, setLettersRandom] = React.useState(randomWords(30));
+  const [lettersRandom, setLettersRandom] = React.useState(randomWords({ exactly: 50, maxLength: 6 }));
 
   //single letter is 15px
   const fontStyle = {
-    margin: "0px",
+    margin: "-0.18px",
     userSelect: "none",
     webkitUserSelect: "none",
     fontFamily: "Source Code Pro",
@@ -161,7 +161,6 @@ export default function TextPart() {
   }
 
   function handleAnswerChange(event) {
-    console.log(indexOfIndex.current + 1);
     var letterHTML = document.getElementById(`${indexOfWord.current}word`).children[indexOfIndex.current + 1];
     var parentElementHTML = letterHTML.parentElement;
     // letterCountOnAWord has a index element so there is one more element.
@@ -240,10 +239,14 @@ export default function TextPart() {
     }
     //Handle wrong and true key hit.
     if (event.key === currentLetter.props.children.toLowerCase()) {
-      //Get the current word
+      //If word ended return
+      if (isWordEnded.current == true) return;
+
       letterHTML.style.color = "#FFFFFFA5";
       letterHTML.setAttribute("data-istrue", "true");
     } else {
+      //If word ended return
+      if (isWordEnded.current == true) return;
       letterHTML.style.color = "#d6646f";
     }
 
