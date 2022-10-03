@@ -6,15 +6,15 @@ This project meant to be a monkeytype alike typing app. Here's a live [link](htt
 
 ## The work done down below.
 
--Random word generation ✅
--Word generation ✅
--Responsive grid system for words ✅
--Auto scroll end of the line ✅
--Typing index like index creation ✅
--Index movement ✅
--Deleting and word history system ✅
--True and false word detection ✅
--Underlining wrong words ✅
+-Random word generation ✅  
+-Word generation ✅  
+-Responsive grid system for words ✅  
+-Auto scroll end of the line ✅  
+-Typing index like index creation ✅  
+-Index movement ✅  
+-Deleting and word history system ✅  
+-True and false word detection ✅  
+-Underlining wrong words ✅  
 ...
 
 ### Currenty working on.
