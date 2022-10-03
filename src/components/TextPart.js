@@ -6,7 +6,7 @@ const lerp = require("lerp");
 
 export default function TextPart() {
   const sourceCode = "'Source Code Pro', monospace";
-  const [lettersRandom, setLettersRandom] = React.useState(randomWords({ exactly: 50, maxLength: 6 }));
+  const [lettersRandom, setLettersRandom] = React.useState(randomWords({ exactly: 50, minLength: 5 }));
 
   //single letter is 15px
   const fontStyle = {
@@ -103,6 +103,7 @@ export default function TextPart() {
   function moveToWord() {
     document.getElementById(`${indexOfWord.current}word`).prepend(refIndex.current);
     indexOfIndex.current = 0;
+    isWordEnded.current = false;
     refIndex.current.style.marginLeft = `${indexOfIndex.current * 14.41 + "px"}`;
     currentLetter = currentWord.props.children[indexOfIndex.current];
   }
@@ -132,7 +133,20 @@ export default function TextPart() {
 
   function moveIndex() {
     indexOfIndex.current = indexOfIndex.current + 1;
-    refIndex.current.style.marginLeft = `${indexOfIndex.current * 14.41 + "px"}`;
+    //refIndex.current.style.marginLeft = `${indexOfIndex.current * 14.41 + "px"}`;
+
+    //Implement move index animaton here.
+    var px = parseInt(refIndex.current.style.marginLeft);
+    update();
+    function update() {
+      if (isWordEnded.current == true) return;
+      px = lerp(px, indexOfIndex.current * 14.41, 0.3);
+      refIndex.current.style.marginLeft = `${px + "px"}`;
+      if (indexOfIndex.current * 14.41 - 0.2 < px) {
+        return;
+      }
+      requestAnimationFrame(update);
+    }
     currentLetter = currentWord.props.children[indexOfIndex.current];
   }
 
@@ -206,7 +220,7 @@ export default function TextPart() {
       }
 
       //Increment index and go to the next word.
-      isWordEnded.current = false;
+      isWordEnded.current = true;
       indexOfWord.current++;
       currentWord = LettersToRender[indexOfWord.current];
       moveToWord();
@@ -254,7 +268,17 @@ export default function TextPart() {
     if (currentWord.props.children.length - 1 == indexOfIndex.current) {
       console.log("word ended");
       isWordEnded.current = true;
-      refIndex.current.style.marginLeft = `${(indexOfIndex.current + 1) * 14.41 + "px"}`;
+      var px = parseInt(refIndex.current.style.marginLeft);
+      update();
+      function update() {
+        if (isWordEnded.current == false) return;
+        px = lerp(px, (indexOfIndex.current + 1) * 14.41, 0.3);
+        refIndex.current.style.marginLeft = `${px + "px"}`;
+        if ((indexOfIndex.current + 1) * 14.41 - 0.1 < px) {
+          return;
+        }
+        requestAnimationFrame(update);
+      }
       return;
     }
     //Move index 1 increment.
