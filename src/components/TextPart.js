@@ -100,11 +100,40 @@ export default function TextPart() {
     document.getElementById(`${indexOfWord.current}word`).prepend(refIndex.current);
   }, []);
 
+  function moveIndexAnim() {
+    //Implement move index animaton here.
+    update();
+    var px = parseInt(refIndex.current.style.marginLeft);
+    function update() {
+      if (isWordEnded.current == true) return;
+      px = lerp(px, indexOfIndex.current * 14, 0.2);
+      refIndex.current.style.marginLeft = `${px + "px"}`;
+      if (indexOfIndex.current * 14 - 0.1 < px) {
+        return;
+      }
+      requestAnimationFrame(update);
+    }
+  }
+
+  function moveIndexAnimBackwards() {
+    //Implement move index backwards animaton here.
+    var px = parseInt(refIndex.current.style.marginLeft);
+    update();
+    function update() {
+      px = lerp(px, indexOfIndex.current * 14, 0.2);
+      refIndex.current.style.marginLeft = `${px + "px"}`;
+      if (indexOfIndex.current * 14 + 0.1 > px) {
+        return;
+      }
+      requestAnimationFrame(update);
+    }
+  }
+
   function moveToWord() {
     document.getElementById(`${indexOfWord.current}word`).prepend(refIndex.current);
     indexOfIndex.current = 0;
     isWordEnded.current = false;
-    refIndex.current.style.marginLeft = `${indexOfIndex.current * 14.41 + "px"}`;
+    refIndex.current.style.marginLeft = `${indexOfIndex.current * 14 + "px"}`;
     currentLetter = currentWord.props.children[indexOfIndex.current];
   }
 
@@ -113,13 +142,13 @@ export default function TextPart() {
     indexOfIndex.current = 0;
     currentLetter = currentWord.props.children[indexOfIndex.current];
 
-    //Move indexer to last word and then we'll set indexOfIndex to last word.
+    //Move indexer to last word and then we'll set indexOfIndex to last letter.
     var letterHTML = document.getElementById(`${indexOfWord.current}word`).children[indexOfIndex.current + 1];
     var parentElementHTML = letterHTML.parentElement;
     // letterCountOnAWord has a index element so there is one more element.
     var letterCountOnAWord = parentElementHTML.childElementCount;
     indexOfIndex.current = letterCountOnAWord - 2;
-    refIndex.current.style.marginLeft = `${(indexOfIndex.current + 1) * 14.41 + "px"}`;
+    refIndex.current.style.marginLeft = `${(indexOfIndex.current + 1) * 14 + "px"}`;
 
     //Remove if there's underline
     for (let i = 1; i < letterCountOnAWord; i++) {
@@ -133,26 +162,16 @@ export default function TextPart() {
 
   function moveIndex() {
     indexOfIndex.current = indexOfIndex.current + 1;
-    //refIndex.current.style.marginLeft = `${indexOfIndex.current * 14.41 + "px"}`;
-
-    //Implement move index animaton here.
-    var px = parseInt(refIndex.current.style.marginLeft);
-    update();
-    function update() {
-      if (isWordEnded.current == true) return;
-      px = lerp(px, indexOfIndex.current * 14.41, 0.3);
-      refIndex.current.style.marginLeft = `${px + "px"}`;
-      if (indexOfIndex.current * 14.41 - 0.2 < px) {
-        return;
-      }
-      requestAnimationFrame(update);
-    }
+    //refIndex.current.style.marginLeft = `${indexOfIndex.current * 14 + "px"}`;
+    moveIndexAnim();
     currentLetter = currentWord.props.children[indexOfIndex.current];
   }
 
   function moveIndexBackwards() {
     indexOfIndex.current = isWordEnded.current ? indexOfIndex.current : indexOfIndex.current - 1;
-    refIndex.current.style.marginLeft = `${indexOfIndex.current * 14.41 + "px"}`;
+    //refIndex.current.style.marginLeft = `${indexOfIndex.current * 14 + "px"}`;
+    var wordEndedIndex = isWordEnded.current == true ? -1 : 0;
+    moveIndexAnimBackwards();
     currentLetter = currentWord.props.children[indexOfIndex.current];
   }
 
@@ -161,12 +180,14 @@ export default function TextPart() {
     var tempWidth = refGrid.current.getBoundingClientRect().width;
     var WordsInARow = 0;
     var tempPixels = 0;
+    var tempLetters = 0;
     for (let i = rowCalculation.current; i < LettersToRender.length; i++) {
-      tempPixels += LettersToRender[i].props.children.length * 14.41 + 14.41;
+      tempLetters += LettersToRender[i].props.children.length + 1;
+      tempPixels = tempLetters * 14;
       if (tempPixels < tempWidth) {
         WordsInARow++;
       } else {
-        if (tempPixels - 14.41 < tempWidth) {
+        if (tempPixels - 14 < tempWidth) {
           WordsInARow++;
         }
         return WordsInARow;
@@ -187,8 +208,9 @@ export default function TextPart() {
         return;
       }
 
-      //Calculate next row.
+      //Calculate the next row.
       nextRow.current = calculateWordsInARow();
+      console.log(nextRow.current);
 
       if (indexOfWord.current == nextRow.current - 1 + rowCalculation.current) {
         console.log("next row!");
@@ -202,7 +224,7 @@ export default function TextPart() {
         }
       }
 
-      //If there's error in a word underline letters.
+      //If there's a error in a word underline letters.
       var tempTrues = 0;
       for (let i = 1; i < letterCountOnAWord; i++) {
         if (parentElementHTML.children[i].getAttribute("data-istrue") == "true") {
@@ -272,9 +294,9 @@ export default function TextPart() {
       update();
       function update() {
         if (isWordEnded.current == false) return;
-        px = lerp(px, (indexOfIndex.current + 1) * 14.41, 0.3);
+        px = lerp(px, (indexOfIndex.current + 1) * 14, 0.3);
         refIndex.current.style.marginLeft = `${px + "px"}`;
-        if ((indexOfIndex.current + 1) * 14.41 - 0.1 < px) {
+        if ((indexOfIndex.current + 1) * 14 - 0.1 < px) {
           return;
         }
         requestAnimationFrame(update);
@@ -287,16 +309,8 @@ export default function TextPart() {
 
   return (
     <div style={{ display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", marginBottom: "100px" }}>
-      <input ref={refInput} autoFocus type="text" style={{ opacity: "0%", height: "20px" }} onKeyDown={handleAnswerChange} />
-      <Grid
-        ref={refGrid}
-        columnGap={1.8}
-        rowGap={1.25}
-        sx={{ position: "relative", width: "90%", maxWidth: "1300px", height: "113px", overflow: "auto" }}
-        container
-        className="text-container"
-        alignItems="flex-start"
-      >
+      <input ref={refInput} autoFocus type="text" style={{ position: "absolute", top: "0%", opacity: "0%", height: "20px" }} onKeyDown={handleAnswerChange} />
+      <Grid ref={refGrid} sx={{ position: "relative", height: "113px", overflow: "auto", gap: "10px 14px" }} container className="text-container" alignItems="flex-start">
         <div ref={refIndex} className="indexer" style={{ margin: "0px", width: "2px", height: "30px", position: "absolute", backgroundColor: "#B0C4B1" }} />
         {LettersToRender}
       </Grid>
