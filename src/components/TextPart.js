@@ -5,10 +5,10 @@ const randomWords = require("random-words");
 const lerp = require("lerp");
 
 export default function TextPart() {
-  const sourceCode = "'Source Code Pro', monospace";
-  const [lettersRandom, setLettersRandom] = React.useState(randomWords({ exactly: 50, minLength: 5 }));
+  const [lettersRandom, setLettersRandom] = React.useState(randomWords({ exactly: 50, maxLength: 5 }));
 
-  //single letter is 15px
+  const sourceCode = "'Source Code Pro', monospace";
+  //Single letter is 14px
   const fontStyle = {
     margin: "-0.18px",
     userSelect: "none",
@@ -59,7 +59,6 @@ export default function TextPart() {
     );
   });
 
-  const refScroll = React.useRef();
   const refInput = React.useRef();
   const refGrid = React.useRef();
   const refIndex = React.useRef();
@@ -72,8 +71,6 @@ export default function TextPart() {
 
   var currentWord = LettersToRender[0];
   var currentLetter = currentWord.props.children[indexOfIndex.current];
-
-  var lastInputForAndroid = "";
 
   function getMobileOperatingSystem() {
     var userAgent = navigator.userAgent || navigator.vendor || window.opera;
@@ -150,6 +147,15 @@ export default function TextPart() {
     indexOfIndex.current = letterCountOnAWord - 2;
     refIndex.current.style.marginLeft = `${(indexOfIndex.current + 1) * 14 + "px"}`;
 
+    //Fill input
+    var text = "";
+    for (let i = 0; i < letterCountOnAWord; i++) {
+      text += "t";
+    }
+    refInput.current.value = text + "t";
+    //Make last pressed length of the word
+    lastPressed.current = letterCountOnAWord + 1;
+
     //Remove if there's underline
     for (let i = 1; i < letterCountOnAWord; i++) {
       parentElementHTML.children[i].style.textDecoration = "none";
@@ -195,13 +201,21 @@ export default function TextPart() {
     }
   }
 
+  const lastPressed = React.useRef(1);
   function handleAnswerChange(event) {
+    //KeyPress for android
+    var keyPressed = event.target.value.charAt(event.target.value.length - 1);
+    keyPressed = lastPressed.current > event.target.value.length ? "<" : keyPressed;
+    console.log(lastPressed.current, keyPressed, event.target.value.length);
+    lastPressed.current = event.target.value.length;
+    ////
+
     var letterHTML = document.getElementById(`${indexOfWord.current}word`).children[indexOfIndex.current + 1];
     var parentElementHTML = letterHTML.parentElement;
     // letterCountOnAWord has a index element so there is one more element.
     var letterCountOnAWord = parentElementHTML.childElementCount;
 
-    if (event.code == "Space") {
+    if (keyPressed == " ") {
       //If no letter is written, don't accept the space input.
       if (refInput.current.value === "" || refInput.current.value === " ") {
         refInput.current.value = "";
@@ -210,7 +224,6 @@ export default function TextPart() {
 
       //Calculate the next row.
       nextRow.current = calculateWordsInARow();
-      console.log(nextRow.current);
 
       if (indexOfWord.current == nextRow.current - 1 + rowCalculation.current) {
         console.log("next row!");
@@ -246,11 +259,12 @@ export default function TextPart() {
       indexOfWord.current++;
       currentWord = LettersToRender[indexOfWord.current];
       moveToWord();
-      refInput.current.value = "";
+      refInput.current.value = "t";
+      lastPressed.current = 1;
       return;
     }
 
-    if (event.code == "Backspace") {
+    if (keyPressed == "<") {
       //If we're on the first word return but go to the prevWord if it's not.
       if (indexOfIndex.current + 1 == 1) {
         if (indexOfWord.current == 0) return;
@@ -274,7 +288,7 @@ export default function TextPart() {
       return;
     }
     //Handle wrong and true key hit.
-    if (event.key === currentLetter.props.children.toLowerCase()) {
+    if (keyPressed === currentLetter.props.children.toLowerCase()) {
       //If word ended return
       if (isWordEnded.current == true) return;
 
@@ -309,7 +323,7 @@ export default function TextPart() {
 
   return (
     <div style={{ display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", marginBottom: "100px" }}>
-      <input ref={refInput} autoFocus type="text" style={{ position: "absolute", top: "0%", opacity: "0%", height: "20px" }} onKeyDown={handleAnswerChange} />
+      <input ref={refInput} autoFocus type="text" style={{ position: "absolute", top: "0%", opacity: "0%", height: "20px" }} onChange={handleAnswerChange} />
       <Grid ref={refGrid} sx={{ position: "relative", height: "113px", overflow: "auto", gap: "10px 14px" }} container className="text-container" alignItems="flex-start">
         <div ref={refIndex} className="indexer" style={{ margin: "0px", width: "2px", height: "30px", position: "absolute", backgroundColor: "#B0C4B1" }} />
         {LettersToRender}
