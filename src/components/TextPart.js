@@ -61,11 +61,13 @@ export default function TextPart() {
 
   const refInput = React.useRef();
   const refGrid = React.useRef();
+  const refIndexer = React.useRef();
   const refIndex = React.useRef();
 
   const indexOfIndex = React.useRef(0);
   const indexOfWord = React.useRef(0);
   const nextRow = React.useRef(0);
+  const rowsPassed = React.useRef(0);
   const linesPassed = React.useRef(1);
   const isWordEnded = React.useRef(false);
 
@@ -97,29 +99,58 @@ export default function TextPart() {
     document.getElementById(`${indexOfWord.current}word`).prepend(refIndex.current);
   }, []);
 
-  function moveIndexAnim() {
+  const ifMoving = React.useRef(false);
+  function moveIndexerAnim() {
+    //Optimize move
+    if (ifMoving.current == true) return;
+    ifMoving.current = true;
+
     //Implement move index animaton here.
     update();
-    var px = parseInt(refIndex.current.style.marginLeft);
+    var px = parseInt(refIndexer.current.style.marginLeft);
+    var offset = refGrid.current.getBoundingClientRect().left - document.body.getBoundingClientRect().left;
     function update() {
-      if (isWordEnded.current == true) return;
-      px = lerp(px, indexOfIndex.current * 14, 0.2);
-      refIndex.current.style.marginLeft = `${px + "px"}`;
-      if (indexOfIndex.current * 14 - 0.1 < px) {
+      px = lerp(px, refIndex.current.getBoundingClientRect().left - offset, 0.2);
+      refIndexer.current.style.marginLeft = `${px + "px"}`;
+      if (refIndex.current.getBoundingClientRect().left - offset - 0.1 < px) {
+        ifMoving.current = false;
         return;
       }
       requestAnimationFrame(update);
     }
   }
 
-  function moveIndexAnimBackwards() {
+  const ifMovingBackwards = React.useRef(false);
+  function moveIndexerAnimBackwards() {
+    //Optimize move
+    if (ifMovingBackwards.current == true) return;
+    ifMovingBackwards.current = true;
+
     //Implement move index backwards animaton here.
-    var px = parseInt(refIndex.current.style.marginLeft);
+    var px = parseInt(refIndexer.current.style.marginLeft);
+    var offset = refGrid.current.getBoundingClientRect().left - document.body.getBoundingClientRect().left;
     update();
     function update() {
-      px = lerp(px, indexOfIndex.current * 14, 0.2);
-      refIndex.current.style.marginLeft = `${px + "px"}`;
-      if (indexOfIndex.current * 14 + 0.1 > px) {
+      px = lerp(px, refIndex.current.getBoundingClientRect().left - offset, 0.2);
+      refIndexer.current.style.marginLeft = `${px + "px"}`;
+      if (refIndex.current.getBoundingClientRect().left - offset + 0.1 > px) {
+        ifMovingBackwards.current = false;
+        return;
+      }
+      requestAnimationFrame(update);
+    }
+  }
+
+  function moveIndexerNextRow() {
+    //Implement move index animaton here.
+    update();
+    var px = parseInt(refIndexer.current.style.marginTop);
+    function update() {
+      console.log(refIndexer.current.style.marginTop, rowsPassed.current * 40);
+      px = lerp(px, rowsPassed.current * 40, 0.2);
+      refIndexer.current.style.marginTop = `${px + "px"}`;
+      if (rowsPassed.current * 40 - 0.1 < px) {
+        ifMoving.current = false;
         return;
       }
       requestAnimationFrame(update);
@@ -128,6 +159,7 @@ export default function TextPart() {
 
   function moveToWord() {
     document.getElementById(`${indexOfWord.current}word`).prepend(refIndex.current);
+    moveIndexerAnim();
     indexOfIndex.current = 0;
     isWordEnded.current = false;
     refIndex.current.style.marginLeft = `${indexOfIndex.current * 14 + "px"}`;
@@ -156,6 +188,9 @@ export default function TextPart() {
     //Make last pressed length of the word
     lastPressed.current = letterCountOnAWord + 1;
 
+    //Move indexer backwards
+    moveIndexerAnimBackwards();
+
     //Remove if there's underline
     for (let i = 1; i < letterCountOnAWord; i++) {
       parentElementHTML.children[i].style.textDecoration = "none";
@@ -168,16 +203,18 @@ export default function TextPart() {
 
   function moveIndex() {
     indexOfIndex.current = indexOfIndex.current + 1;
-    //refIndex.current.style.marginLeft = `${indexOfIndex.current * 14 + "px"}`;
-    moveIndexAnim();
+    console.log();
+    refIndex.current.style.marginLeft = `${indexOfIndex.current * 14 + "px"}`;
+    //moveIndexAnim();
+    moveIndexerAnim();
     currentLetter = currentWord.props.children[indexOfIndex.current];
   }
 
   function moveIndexBackwards() {
     indexOfIndex.current = isWordEnded.current ? indexOfIndex.current : indexOfIndex.current - 1;
-    //refIndex.current.style.marginLeft = `${indexOfIndex.current * 14 + "px"}`;
+    refIndex.current.style.marginLeft = `${indexOfIndex.current * 14 + "px"}`;
     var wordEndedIndex = isWordEnded.current == true ? -1 : 0;
-    moveIndexAnimBackwards();
+    moveIndexerAnimBackwards();
     currentLetter = currentWord.props.children[indexOfIndex.current];
   }
 
@@ -217,8 +254,8 @@ export default function TextPart() {
 
     if (keyPressed == " ") {
       //If no letter is written, don't accept the space input.
-      if (refInput.current.value === "" || refInput.current.value === " ") {
-        refInput.current.value = "";
+      if (refInput.current.value === "" || refInput.current.value === " " || refInput.current.value == "t ") {
+        refInput.current.value = "t";
         return;
       }
 
@@ -227,6 +264,13 @@ export default function TextPart() {
 
       if (indexOfWord.current == nextRow.current - 1 + rowCalculation.current) {
         console.log("next row!");
+
+        //Move indexer to next row and next word.
+        rowsPassed.current++;
+        moveIndexerNextRow();
+        moveIndexBackwards();
+
+        //Row calculation.
         rowCalculation.current += calculateWordsInARow();
         console.log(rowCalculation.current);
         if (linesPassed.current == 2) {
@@ -304,17 +348,8 @@ export default function TextPart() {
     if (currentWord.props.children.length - 1 == indexOfIndex.current) {
       console.log("word ended");
       isWordEnded.current = true;
-      var px = parseInt(refIndex.current.style.marginLeft);
-      update();
-      function update() {
-        if (isWordEnded.current == false) return;
-        px = lerp(px, (indexOfIndex.current + 1) * 14, 0.3);
-        refIndex.current.style.marginLeft = `${px + "px"}`;
-        if ((indexOfIndex.current + 1) * 14 - 0.1 < px) {
-          return;
-        }
-        requestAnimationFrame(update);
-      }
+      refIndex.current.style.marginLeft = `${(indexOfIndex.current + 1) * 14 + "px"}`;
+      moveIndexerAnim();
       return;
     }
     //Move index 1 increment.
@@ -323,9 +358,10 @@ export default function TextPart() {
 
   return (
     <div style={{ display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", marginBottom: "100px" }}>
-      <input ref={refInput} autoFocus type="text" style={{ position: "absolute", top: "0%", opacity: "0%", height: "20px" }} onChange={handleAnswerChange} />
+      <input ref={refInput} autoFocus type="text" style={{ position: "absolute", top: "0%", opacity: "100%", height: "20px" }} onChange={handleAnswerChange} />
       <Grid ref={refGrid} sx={{ position: "relative", height: "113px", overflow: "auto", gap: "10px 14px" }} container className="text-container" alignItems="flex-start">
-        <div ref={refIndex} className="indexer" style={{ margin: "0px", width: "2px", height: "30px", position: "absolute", backgroundColor: "#B0C4B1" }} />
+        <div ref={refIndexer} className="indexerVisual" style={{ margin: "0px", width: "2px", height: "30px", position: "absolute", backgroundColor: "#B0C4B1" }} />
+        <div ref={refIndex} className="indexer" style={{ margin: "0px", width: "2px", height: "30px", position: "absolute", backgroundColor: "#B0C4B1", opacity: "0%" }} />
         {LettersToRender}
       </Grid>
     </div>

@@ -15,8 +15,10 @@ This project meant to be a monkeytype alike typing app. Here's a live [link](htt
 -Deleting and word history system ✅  
 -True and false word detection ✅  
 -Underlining wrong words ✅  
+-Smooth index animaton by linear interpolation ✅
+
 ...
 
 ### Currenty working on.
 
--Smooth index animaton by linear interpolation.
+-Game modes...
