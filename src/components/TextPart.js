@@ -8,6 +8,7 @@ export default function TextPart() {
   const [lettersRandom, setLettersRandom] = React.useState(randomWords({ exactly: 50, maxLength: 5 }));
 
   const sourceCode = "'Source Code Pro', monospace";
+  const Comfortaa = "'Comfortaa', cursive";
   //Single letter is 14px
   const fontStyle = {
     margin: "-0.18px",
@@ -358,7 +359,7 @@ export default function TextPart() {
 
   return (
     <div style={{ display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", marginBottom: "100px" }}>
-      <input ref={refInput} autoFocus type="text" style={{ position: "absolute", top: "0%", opacity: "100%", height: "20px" }} onChange={handleAnswerChange} />
+      <input ref={refInput} autoFocus type="text" style={{ position: "absolute", top: "0%", opacity: "0%", height: "20px" }} onChange={handleAnswerChange} />
       <Grid ref={refGrid} sx={{ position: "relative", height: "113px", overflow: "auto", gap: "10px 14px" }} container className="text-container" alignItems="flex-start">
         <div ref={refIndexer} className="indexerVisual" style={{ margin: "0px", width: "2px", height: "30px", position: "absolute", backgroundColor: "#B0C4B1" }} />
         <div ref={refIndex} className="indexer" style={{ margin: "0px", width: "2px", height: "30px", position: "absolute", backgroundColor: "#B0C4B1", opacity: "0%" }} />
