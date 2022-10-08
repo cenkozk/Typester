@@ -5,7 +5,7 @@ const randomWords = require("random-words");
 const lerp = require("lerp");
 
 export default function TextPart() {
-  const [lettersRandom, setLettersRandom] = React.useState(randomWords({ exactly: 50, maxLength: 5 }));
+  const [lettersRandom, setLettersRandom] = React.useState(randomWords({ exactly: 100, maxLength: 5 }));
 
   const sourceCode = "'Source Code Pro', monospace";
   const Comfortaa = "'Comfortaa', cursive";
