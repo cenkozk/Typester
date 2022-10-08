@@ -1,11 +1,13 @@
 import { Box, Button, Grid, Typography } from "@mui/material";
 import { Stack, keyframes } from "@mui/system";
-import React from "react";
+import React, { forwardRef, useImperativeHandle } from "react";
 const randomWords = require("random-words");
 const lerp = require("lerp");
 
-export default function TextPart() {
-  const [lettersRandom, setLettersRandom] = React.useState(randomWords({ exactly: 100, maxLength: 5 }));
+function TextPart(props, ref) {
+  const wordCount = React.useRef(100);
+  const [lettersRandom, setLettersRandom] = React.useState(randomWords({ exactly: wordCount.current, maxLength: 5 }));
+  const [renderPage, setRenderPage] = React.useState(true);
 
   const sourceCode = "'Source Code Pro', monospace";
   const Comfortaa = "'Comfortaa', cursive";
@@ -35,30 +37,13 @@ export default function TextPart() {
   
 `;
 
+  //Info about gama
+  const [wordsTyped, setWordsTyped] = React.useState(0);
+  const [wrongTypedLetters, setWrongTypedLetters] = React.useState([]);
+
   const writeArray = lettersRandom;
-  var letters = [];
-  var LettersToRender = [];
-
-  writeArray.forEach((element) => {
-    var currentLetters = element.split("");
-    letters.push(currentLetters);
-  });
-
-  //Shuffle array
-  //letters = letters.sort((a, b) => 0.5 - Math.random());
-
-  letters.forEach((element) => {
-    var reMappedLetters = element.map((letter) => (
-      <letter data-istrue="false" style={{ ...fontStyle }}>
-        {letter.toLowerCase()}
-      </letter>
-    ));
-    LettersToRender.push(
-      <Box item id={`${letters.indexOf(element)}word`} sx={{ margin: "0px", height: "30px" }}>
-        {reMappedLetters}
-      </Box>
-    );
-  });
+  const letters = React.useRef([]);
+  const [LettersToRender, setLettersToRender] = React.useState([]);
 
   const refInput = React.useRef();
   const refGrid = React.useRef();
@@ -71,34 +56,49 @@ export default function TextPart() {
   const rowsPassed = React.useRef(0);
   const linesPassed = React.useRef(1);
   const isWordEnded = React.useRef(false);
+  const currentWord = React.useRef();
+  const currentLetter = React.useRef();
 
-  var currentWord = LettersToRender[0];
-  var currentLetter = currentWord.props.children[indexOfIndex.current];
+  //Generate array here.
+  React.useEffect(() => {
+    writeArray.forEach((element) => {
+      var currentLetters = element.split("");
+      letters.current.push(currentLetters);
+    });
 
-  function getMobileOperatingSystem() {
-    var userAgent = navigator.userAgent || navigator.vendor || window.opera;
+    //Shuffle array
+    //letters.current = letters.current.sort((a, b) => 0.5 - Math.random());
 
-    // Windows Phone must come first because its UA also contains "Android"
-    if (/windows phone/i.test(userAgent)) {
-      return "Windows Phone";
-    }
-
-    if (/android/i.test(userAgent)) {
-      return "Android";
-    }
-
-    // iOS detection from: http://stackoverflow.com/a/9039885/177710
-    if (/iPad|iPhone|iPod/.test(userAgent) && !window.MSStream) {
-      return "iOS";
-    }
-
-    return "unknown";
-  }
+    letters.current.forEach((element) => {
+      var reMappedLetters = element.map((letter) => (
+        <letter data-istrue="false" style={{ ...fontStyle }}>
+          {letter.toLowerCase()}
+        </letter>
+      ));
+      setLettersToRender((prevLetters) => [
+        ...prevLetters,
+        <Box item id={`${letters.current.indexOf(element)}word`} sx={{ margin: "0px", height: "30px" }}>
+          {reMappedLetters}
+        </Box>,
+      ]);
+    });
+  }, [lettersRandom]);
 
   React.useEffect(() => {
+    if (LettersToRender.length != wordCount.current) return;
+    currentWord.current = LettersToRender[0];
+    currentLetter.current = currentWord.current.props.children[indexOfIndex.current];
     nextRow.current = calculateWordsInARow();
     document.getElementById(`${indexOfWord.current}word`).prepend(refIndex.current);
-  }, []);
+
+    //Focus to input if there's problem
+    refInput.current.focus();
+  }, [LettersToRender]);
+
+  //Handle typed word count.
+  React.useEffect(() => {
+    props.handleWordTyped(wordsTyped);
+  }, [wordsTyped]);
 
   const ifMoving = React.useRef(false);
   function moveIndexerAnim() {
@@ -163,13 +163,16 @@ export default function TextPart() {
     indexOfIndex.current = 0;
     isWordEnded.current = false;
     refIndex.current.style.marginLeft = `${indexOfIndex.current * 14 + "px"}`;
-    currentLetter = currentWord.props.children[indexOfIndex.current];
+    currentLetter.current = currentWord.current.props.children[indexOfIndex.current];
+
+    //Increase word typed
+    setWordsTyped((prev) => prev + 1);
   }
 
   function returnToWord() {
     document.getElementById(`${indexOfWord.current}word`).prepend(refIndex.current);
     indexOfIndex.current = 0;
-    currentLetter = currentWord.props.children[indexOfIndex.current];
+    currentLetter.current = currentWord.current.props.children[indexOfIndex.current];
 
     //Move indexer to last word and then we'll set indexOfIndex to last letter.
     var letterHTML = document.getElementById(`${indexOfWord.current}word`).children[indexOfIndex.current + 1];
@@ -195,6 +198,9 @@ export default function TextPart() {
     for (let i = 1; i < letterCountOnAWord; i++) {
       parentElementHTML.children[i].style.textDecoration = "none";
     }
+
+    //Decrease typed word count
+    setWordsTyped((prev) => prev - 1);
   }
 
   function scrollText() {
@@ -206,7 +212,12 @@ export default function TextPart() {
     refIndex.current.style.marginLeft = `${indexOfIndex.current * 14 + "px"}`;
     //moveIndexAnim();
     moveIndexerAnim();
-    currentLetter = currentWord.props.children[indexOfIndex.current];
+    currentLetter.current = currentWord.current.props.children[indexOfIndex.current];
+
+    //Start the game if it's idle.
+    if (props.gameState == "idle") {
+      props.handleGameStart();
+    }
   }
 
   function moveIndexBackwards() {
@@ -214,7 +225,12 @@ export default function TextPart() {
     refIndex.current.style.marginLeft = `${indexOfIndex.current * 14 + "px"}`;
     var wordEndedIndex = isWordEnded.current == true ? -1 : 0;
     moveIndexerAnimBackwards();
-    currentLetter = currentWord.props.children[indexOfIndex.current];
+    currentLetter.current = currentWord.current.props.children[indexOfIndex.current];
+  }
+
+  function onInputLostFocus() {
+    console.log("input focus lost");
+    refInput.current.focus();
   }
 
   const rowCalculation = React.useRef(0);
@@ -239,6 +255,8 @@ export default function TextPart() {
 
   const lastPressed = React.useRef(1);
   function handleAnswerChange(event) {
+    //Don't accept input if game state stopped
+    if (props.gameState == "stopped") return;
     //KeyPress for android
     var keyPressed = event.target.value.charAt(event.target.value.length - 1);
     keyPressed = lastPressed.current > event.target.value.length ? "<" : keyPressed;
@@ -276,15 +294,15 @@ export default function TextPart() {
         }
       }
 
-      //If there's a error in a word underline letters.
-      var tempTrues = 0;
+      //If there's a error in a word underline letters.current.
+      var tempFalses = 0;
       for (let i = 1; i < letterCountOnAWord; i++) {
-        if (parentElementHTML.children[i].getAttribute("data-istrue") == "true") {
-          tempTrues++;
+        if (parentElementHTML.children[i].getAttribute("data-istrue") == "false") {
+          tempFalses++;
         }
       }
 
-      if (tempTrues == letterCountOnAWord - 1) {
+      if (tempFalses == 0) {
       } else {
         for (let i = 1; i < letterCountOnAWord; i++) {
           parentElementHTML.children[i].style.textDecoration = "underline";
@@ -292,10 +310,12 @@ export default function TextPart() {
         }
       }
 
+      setWrongTypedLetters((prev) => prev + tempFalses);
+
       //Increment index and go to the next word.
       isWordEnded.current = true;
       indexOfWord.current++;
-      currentWord = LettersToRender[indexOfWord.current];
+      currentWord.current = LettersToRender[indexOfWord.current];
       moveToWord();
       refInput.current.value = "t";
       lastPressed.current = 1;
@@ -308,7 +328,7 @@ export default function TextPart() {
         if (indexOfWord.current == 0) return;
 
         indexOfWord.current--;
-        currentWord = LettersToRender[indexOfWord.current];
+        currentWord.current = LettersToRender[indexOfWord.current];
         //Becuase we're on the last letter make wordEnded true.
         isWordEnded.current = true;
         returnToWord();
@@ -326,7 +346,7 @@ export default function TextPart() {
       return;
     }
     //Handle wrong and true key hit.
-    if (keyPressed === currentLetter.props.children.toLowerCase()) {
+    if (keyPressed === currentLetter.current.props.children.toLowerCase()) {
       //If word ended return
       if (isWordEnded.current == true) return;
 
@@ -339,7 +359,7 @@ export default function TextPart() {
     }
 
     //If word ended handle it here.
-    if (currentWord.props.children.length - 1 == indexOfIndex.current) {
+    if (currentWord.current.props.children.length - 1 == indexOfIndex.current) {
       isWordEnded.current = true;
       refIndex.current.style.marginLeft = `${(indexOfIndex.current + 1) * 14 + "px"}`;
       moveIndexerAnim();
@@ -349,9 +369,15 @@ export default function TextPart() {
     moveIndex();
   }
 
+  useImperativeHandle(ref, () => ({
+    stopGame() {
+      console.log("text part stopped(not yet).");
+    },
+  }));
+
   return (
     <div style={{ display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", marginBottom: "100px" }}>
-      <input ref={refInput} autoFocus type="text" style={{ position: "absolute", top: "0%", opacity: "0%", height: "20px" }} onChange={handleAnswerChange} />
+      <input ref={refInput} onBlur={onInputLostFocus} type="text" style={{ position: "absolute", top: "0%", opacity: "0%", height: "20px" }} onChange={handleAnswerChange} />
       <Grid ref={refGrid} sx={{ position: "relative", height: "113px", overflow: "auto", gap: "10px 14px" }} container className="text-container" alignItems="flex-start">
         <div ref={refIndexer} className="indexerVisual" style={{ margin: "0px", width: "2px", height: "30px", position: "absolute", backgroundColor: "#B0C4B1" }} />
         <div ref={refIndex} className="indexer" style={{ margin: "0px", width: "2px", height: "30px", position: "absolute", backgroundColor: "#B0C4B1", opacity: "0%" }} />
@@ -360,3 +386,5 @@ export default function TextPart() {
     </div>
   );
 }
+
+export default forwardRef(TextPart);
