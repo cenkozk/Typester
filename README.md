@@ -2,7 +2,7 @@
 
 # Typester, a monkeytype alike typing app
 
-This project meant to be a monkeytype alike typing app. Here's a live [link](https://github.com/facebook/create-react-app).
+This project meant to be a monkeytype alike typing app. Here's a live [link](https://typester.vercel.app).
 
 ## The work done down below.
 

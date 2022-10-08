@@ -147,7 +147,6 @@ export default function TextPart() {
     update();
     var px = parseInt(refIndexer.current.style.marginTop);
     function update() {
-      console.log(refIndexer.current.style.marginTop, rowsPassed.current * 40);
       px = lerp(px, rowsPassed.current * 40, 0.2);
       refIndexer.current.style.marginTop = `${px + "px"}`;
       if (rowsPassed.current * 40 - 0.1 < px) {
@@ -204,7 +203,6 @@ export default function TextPart() {
 
   function moveIndex() {
     indexOfIndex.current = indexOfIndex.current + 1;
-    console.log();
     refIndex.current.style.marginLeft = `${indexOfIndex.current * 14 + "px"}`;
     //moveIndexAnim();
     moveIndexerAnim();
@@ -244,7 +242,6 @@ export default function TextPart() {
     //KeyPress for android
     var keyPressed = event.target.value.charAt(event.target.value.length - 1);
     keyPressed = lastPressed.current > event.target.value.length ? "<" : keyPressed;
-    console.log(lastPressed.current, keyPressed, event.target.value.length);
     lastPressed.current = event.target.value.length;
     ////
 
@@ -264,8 +261,6 @@ export default function TextPart() {
       nextRow.current = calculateWordsInARow();
 
       if (indexOfWord.current == nextRow.current - 1 + rowCalculation.current) {
-        console.log("next row!");
-
         //Move indexer to next row and next word.
         rowsPassed.current++;
         moveIndexerNextRow();
@@ -273,7 +268,6 @@ export default function TextPart() {
 
         //Row calculation.
         rowCalculation.current += calculateWordsInARow();
-        console.log(rowCalculation.current);
         if (linesPassed.current == 2) {
           linesPassed.current = 2;
           scrollText();
@@ -291,7 +285,6 @@ export default function TextPart() {
       }
 
       if (tempTrues == letterCountOnAWord - 1) {
-        console.log("word true");
       } else {
         for (let i = 1; i < letterCountOnAWord; i++) {
           parentElementHTML.children[i].style.textDecoration = "underline";
@@ -347,7 +340,6 @@ export default function TextPart() {
 
     //If word ended handle it here.
     if (currentWord.props.children.length - 1 == indexOfIndex.current) {
-      console.log("word ended");
       isWordEnded.current = true;
       refIndex.current.style.marginLeft = `${(indexOfIndex.current + 1) * 14 + "px"}`;
       moveIndexerAnim();
