@@ -1,11 +1,13 @@
 import { Box, Button, Grid, Typography } from "@mui/material";
 import { Stack, keyframes } from "@mui/system";
+import { motion } from "framer-motion";
+import FocusIcon from "@mui/icons-material/PanToolAlt";
 import React, { forwardRef, useImperativeHandle } from "react";
 const randomWords = require("random-words");
 const lerp = require("lerp");
 
 function TextPart(props, ref) {
-  const wordCount = React.useRef(100);
+  const wordCount = React.useRef(50);
   const [lettersRandom, setLettersRandom] = React.useState(randomWords({ exactly: wordCount.current, maxLength: 5 }));
   const [renderPage, setRenderPage] = React.useState(true);
 
@@ -51,13 +53,17 @@ function TextPart(props, ref) {
   const refIndex = React.useRef();
 
   const indexOfIndex = React.useRef(0);
+  const [offsetIndex, setOffsetIndex] = React.useState(0);
   const indexOfWord = React.useRef(0);
   const nextRow = React.useRef(0);
   const rowsPassed = React.useRef(0);
   const linesPassed = React.useRef(1);
-  const isWordEnded = React.useRef(false);
   const currentWord = React.useRef();
   const currentLetter = React.useRef();
+
+  const isWordEnded = React.useRef(false);
+  const isPrevWordAllowed = React.useRef(false);
+  const [isFocused, setIsFocused] = React.useState(true);
 
   //Generate array here.
   React.useEffect(() => {
@@ -75,9 +81,15 @@ function TextPart(props, ref) {
           {letter.toLowerCase()}
         </letter>
       ));
+
+      const item = {
+        hidden: { opacity: 0 },
+        show: { opacity: 1 },
+      };
+
       setLettersToRender((prevLetters) => [
         ...prevLetters,
-        <Box item id={`${letters.current.indexOf(element)}word`} sx={{ margin: "0px", height: "30px" }}>
+        <Box item variants={item} component={motion.div} id={`${letters.current.indexOf(element)}word`} sx={{ margin: "0px", height: "30px" }}>
           {reMappedLetters}
         </Box>,
       ]);
@@ -100,69 +112,17 @@ function TextPart(props, ref) {
     props.handleWordTyped(wordsTyped);
   }, [wordsTyped]);
 
-  const ifMoving = React.useRef(false);
   function moveIndexerAnim() {
-    //Optimize move
-    if (ifMoving.current == true) return;
-    ifMoving.current = true;
-
-    //Implement move index animaton here.
-    update();
-    var px = parseInt(refIndexer.current.style.marginLeft);
-    var offset = refGrid.current.getBoundingClientRect().left - document.body.getBoundingClientRect().left;
-    function update() {
-      px = lerp(px, refIndex.current.getBoundingClientRect().left - offset, 0.2);
-      refIndexer.current.style.marginLeft = `${px + "px"}`;
-      if (refIndex.current.getBoundingClientRect().left - offset - 0.1 < px) {
-        ifMoving.current = false;
-        return;
-      }
-      requestAnimationFrame(update);
-    }
-  }
-
-  const ifMovingBackwards = React.useRef(false);
-  function moveIndexerAnimBackwards() {
-    //Optimize move
-    if (ifMovingBackwards.current == true) return;
-    ifMovingBackwards.current = true;
-
-    //Implement move index backwards animaton here.
-    var px = parseInt(refIndexer.current.style.marginLeft);
-    var offset = refGrid.current.getBoundingClientRect().left - document.body.getBoundingClientRect().left;
-    update();
-    function update() {
-      px = lerp(px, refIndex.current.getBoundingClientRect().left - offset, 0.2);
-      refIndexer.current.style.marginLeft = `${px + "px"}`;
-      if (refIndex.current.getBoundingClientRect().left - offset + 0.1 > px) {
-        ifMovingBackwards.current = false;
-        return;
-      }
-      requestAnimationFrame(update);
-    }
-  }
-
-  function moveIndexerNextRow() {
-    //Implement move index animaton here.
-    update();
-    var px = parseInt(refIndexer.current.style.marginTop);
-    function update() {
-      px = lerp(px, rowsPassed.current * 40, 0.2);
-      refIndexer.current.style.marginTop = `${px + "px"}`;
-      if (rowsPassed.current * 40 - 0.1 < px) {
-        ifMoving.current = false;
-        return;
-      }
-      requestAnimationFrame(update);
-    }
+    if (!isFocused) setIsFocused(true);
+    setOffsetIndex(refIndex.current.getBoundingClientRect().left - (refGrid.current.getBoundingClientRect().left - document.body.getBoundingClientRect().left));
   }
 
   function moveToWord() {
     document.getElementById(`${indexOfWord.current}word`).prepend(refIndex.current);
-    moveIndexerAnim();
     indexOfIndex.current = 0;
     isWordEnded.current = false;
     refIndex.current.style.marginLeft = `${indexOfIndex.current * 14 + "px"}`;
+    moveIndexerAnim();
     currentLetter.current = currentWord.current.props.children[indexOfIndex.current];
 
     //Increase word typed
@@ -192,7 +152,7 @@ function TextPart(props, ref) {
     lastPressed.current = letterCountOnAWord + 1;
 
     //Move indexer backwards
-    moveIndexerAnimBackwards();
+    moveIndexerAnim();
 
     //Remove if there's underline
     for (let i = 1; i < letterCountOnAWord; i++) {
@@ -224,13 +184,19 @@ function TextPart(props, ref) {
     indexOfIndex.current = isWordEnded.current ? indexOfIndex.current : indexOfIndex.current - 1;
     refIndex.current.style.marginLeft = `${indexOfIndex.current * 14 + "px"}`;
     var wordEndedIndex = isWordEnded.current == true ? -1 : 0;
-    moveIndexerAnimBackwards();
+    moveIndexerAnim();
     currentLetter.current = currentWord.current.props.children[indexOfIndex.current];
   }
 
   function onInputLostFocus() {
     console.log("input focus lost");
+    setIsFocused(false);
+  }
+
+  function onInputFocus() {
+    console.log("input focus");
     refInput.current.focus();
+    setIsFocused(true);
   }
 
   const rowCalculation = React.useRef(0);
@@ -281,7 +247,6 @@ function TextPart(props, ref) {
       if (indexOfWord.current == nextRow.current - 1 + rowCalculation.current) {
         //Move indexer to next row and next word.
         rowsPassed.current++;
-        moveIndexerNextRow();
         moveIndexBackwards();
 
         //Row calculation.
@@ -325,7 +290,8 @@ function TextPart(props, ref) {
     if (keyPressed == "<") {
       //If we're on the first word return but go to the prevWord if it's not.
       if (indexOfIndex.current + 1 == 1) {
-        if (indexOfWord.current == 0) return;
+        //Disable if prevWord isn't allowed.
+        if (indexOfWord.current == 0 || !isPrevWordAllowed.current) return;
 
         indexOfWord.current--;
         currentWord.current = LettersToRender[indexOfWord.current];
@@ -375,13 +341,84 @@ function TextPart(props, ref) {
     },
   }));
 
+  //Variant anim.
+  const container = {
+    hidden: { opacity: 0 },
+    show: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.015,
+      },
+    },
+  };
+
   return (
-    <div style={{ display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", marginBottom: "100px" }}>
+    <div
+      onClick={onInputFocus}
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        justifyContent: "flex-start",
+        alignItems: "flex-start",
+        marginBottom: "100px",
+        height: "113px",
+      }}
+    >
+      {!isFocused && (
+        <Box
+          sx={{
+            position: "absolute",
+            zIndex: 5,
+            width: "90%",
+            maxWidth: "1200px",
+            height: "100px",
+            alignItems: "center",
+            justifyContent: "center",
+            display: "flex",
+            flexDirection: "column",
+          }}
+        >
+          <FocusIcon sx={{ color: "#B0C4B1" }} />
+          <Typography sx={{ ...fontStyle, color: "#B0C4B1", fontSize: "18px" }}>Click here to focus.</Typography>
+        </Box>
+      )}
       <input ref={refInput} onBlur={onInputLostFocus} type="text" style={{ position: "absolute", top: "0%", opacity: "0%", height: "20px" }} onChange={handleAnswerChange} />
-      <Grid ref={refGrid} sx={{ position: "relative", height: "113px", overflow: "auto", gap: "10px 14px" }} container className="text-container" alignItems="flex-start">
-        <div ref={refIndexer} className="indexerVisual" style={{ margin: "0px", width: "2px", height: "30px", position: "absolute", backgroundColor: "#B0C4B1" }} />
-        <div ref={refIndex} className="indexer" style={{ margin: "0px", width: "2px", height: "30px", position: "absolute", backgroundColor: "#B0C4B1", opacity: "0%" }} />
+      <Grid
+        key={LettersToRender}
+        component={motion.div}
+        initial="hidden"
+        animate="show"
+        transition={{
+          delay: 0.5,
+        }}
+        variants={container}
+        ref={refGrid}
+        sx={{
+          position: "relative",
+          filter: isFocused ? "blur(0px)" : "blur(5px)",
+          height: "auto",
+          overflow: "auto",
+          gap: "10px 14px",
+          margin: "0px",
+          justifyContent: "flex-start",
+          padding: "0px",
+        }}
+        container
+        className="text-container"
+        alignItems="flex-start"
+      >
         {LettersToRender}
+        <div ref={refIndex} className="indexer" style={{ margin: "0px", width: "2px", height: "30px", position: "absolute", backgroundColor: "#B0C4B1", opacity: "0%" }} />
+        <motion.div
+          ref={refIndexer}
+          animate={{ x: offsetIndex, y: rowsPassed.current * 40 }}
+          transition={{
+            duration: 0.2,
+            ease: "easeOut",
+          }}
+          className="indexerVisual"
+          style={{ margin: "0px", width: "2px", height: "30px", position: "absolute", backgroundColor: "#B0C4B1" }}
+        />
       </Grid>
     </div>
   );

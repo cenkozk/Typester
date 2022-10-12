@@ -14,8 +14,8 @@ export default function Timer(props) {
     color: "#b0c4b1",
   };
   return (
-    <Box sx={{ width: "90%", maxWidth: "1300px" }}>
-      <Typography sx={{ ...fontStyle }}>{props.time}</Typography>
+    <Box sx={{ width: "auto", maxWidth: "1300px" }}>
+      <Typography sx={{ ...fontStyle, marginBottom: "6px" }}>{props.time}</Typography>
     </Box>
   );
 }

@@ -3,6 +3,7 @@ import React from "react";
 import KeyboardIcon from "@mui/icons-material/Keyboard";
 import { Dialog, IconButton, Stack, Typography, DialogActions, Button, DialogContent, DialogContentText, DialogTitle } from "@mui/material";
 import InfoIcon from "@mui/icons-material/Info";
+import { motion } from "framer-motion";
 
 export default function Header() {
   const exo2 = "'Exo 2', sans-serif";
@@ -30,7 +31,6 @@ export default function Header() {
     color: "#FFFFFFA5",
     color: "#6e7779",
   };
-  var link = <a href={"https://github.com/emirhanozk/Typester"}>GitHub link.</a>;
 
   const [open, setOpen] = React.useState(false);
 
@@ -42,7 +42,7 @@ export default function Header() {
     setOpen(false);
   };
 
-  function openDialog() {}
+  var link = <a href={"https://github.com/emirhanozk/Typester"}>GitHub link.</a>;
 
   return (
     <Stack
@@ -53,21 +53,37 @@ export default function Header() {
         top: "0%",
         minWidth: "300px",
         width: "60vw",
-        height: "70px",
+        height: "100px",
         background: "#B0C4B1",
         boxShadow: "0px 10px 25px 10px rgba(0, 0, 0, 0.25)",
         borderRadius: "0px 0px 30px 30px}",
       }}
+      component={motion.div}
+      initial={{ y: "-100%" }}
+      animate={{
+        y: "-30%",
+      }}
+      transition={{
+        type: "spring",
+        damping: 8,
+        stiffness: 100,
+        restDelta: 0.001,
+        duration: 0.3,
+        delay: 0.5,
+        bounce: 0.25,
+      }}
     >
       <Box
         className="leftPart"
-        sx={{ display: "flex", flexDirection: "row", alignItems: "center", justifyContent: "center", marginTop: "15px", width: "140px", marginLeft: "30px", height: "45px" }}
+        component={motion.div}
+        whileHover={{ scale: 1.1 }}
+        sx={{ display: "flex", flexDirection: "row", alignItems: "center", justifyContent: "center", marginTop: "45px", width: "140px", marginLeft: "30px", height: "45px" }}
       >
         <KeyboardIcon sx={{ color: "#4A5759", width: "45px", height: "45px" }} />
         <Typography sx={fontExo}>Typester</Typography>
       </Box>
-      <Stack direction="row" spacing={2} className="rightPart" sx={{ marginRight: "30px", alignItems: "center", marginTop: "5px" }}>
-        <IconButton onClick={handleClickOpen} sx={{ width: "35px", height: "35px" }}>
+      <Stack direction="row" spacing={2} className="rightPart" sx={{ marginRight: "30px", alignItems: "center", marginTop: "35px" }}>
+        <IconButton onClick={handleClickOpen} component={motion.div} whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }} sx={{ width: "35px", height: "35px" }}>
           <InfoIcon sx={{ width: "30px", height: "30px", color: "#4A5759" }} />
         </IconButton>
       </Stack>
