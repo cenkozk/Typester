@@ -4,11 +4,13 @@ import React from "react";
 import "./App.css";
 import Header from "./components/Header";
 import TextPart from "./components/TextPart";
-import Timer from "./components/Timer";
 import TextPartSettings from "./components/TextPartSettings";
-import { Stack } from "@mui/system";
+import Timer from "./components/Timer";
+import TimerModule from "tiny-timer";
+
 function App() {
   const [timeLength, setTimeLength] = React.useState(35);
+  const [timeModule, setTimeModule] = React.useState(new TimerModule({ stopwatch: true }));
   const [time, setTime] = React.useState(0);
   const [gameState, setGameState] = React.useState("idle");
   const [wordTyped, setWordTyped] = React.useState(0);
@@ -18,12 +20,12 @@ function App() {
 
   //Count time.
   React.useEffect(() => {
+    timeModule.on("tick", (ms) => setTime(parseInt(Math.floor(timeModule.time) / 1000)));
+    timeModule.on("done", () => console.log("done!"));
+    timeModule.on("statusChanged", (status) => console.log("status:", status));
+
     if (gameState == "started") {
-      for (let i = 1; i < timeLength + 1; i++) {
-        setTimeout(() => {
-          setTime(i);
-        }, i * 1000);
-      }
+      timeModule.start(timeLength * 1000); // run for 5 seconds
     }
   }, [gameState]);
 
@@ -62,17 +64,19 @@ function App() {
   return (
     <div className="app">
       <Header />
-      <TextPartSettings />
-      <Box
-        component={motion.div}
-        animate={{
-          scale: [0.95, 1],
-          opacity: ["0%", "100%"],
-        }}
-        sx={{ width: "90%", maxWidth: "1200px" }}
-      >
-        <Timer time={time.toString()} />
-        <TextPart ref={gameRef} handleGameStart={startTheGame} gameState={gameState} handleWordTyped={setWordTypedFunc} />
+      <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", marginTop: "15vh" }}>
+        <TextPartSettings />
+        <Box
+          component={motion.div}
+          animate={{
+            scale: [0.95, 1],
+            opacity: ["0%", "100%"],
+          }}
+          sx={{ width: "90%", maxWidth: "1200px" }}
+        >
+          <Timer key={time} time={time.toString()} />
+          <TextPart ref={gameRef} handleGameStart={startTheGame} gameState={gameState} handleWordTyped={setWordTypedFunc} timeModule={timeModule} />
+        </Box>
       </Box>
     </div>
   );

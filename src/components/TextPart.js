@@ -1,16 +1,13 @@
-import { Box, Button, Grid, Typography } from "@mui/material";
+import { Box, Button, Grid, IconButton, Typography } from "@mui/material";
 import { Stack, keyframes } from "@mui/system";
 import { motion } from "framer-motion";
 import FocusIcon from "@mui/icons-material/PanToolAlt";
+import RestartIcon from "@mui/icons-material/Autorenew";
 import React, { forwardRef, useImperativeHandle } from "react";
 const randomWords = require("random-words");
 const lerp = require("lerp");
 
 function TextPart(props, ref) {
-  const wordCount = React.useRef(50);
-  const [lettersRandom, setLettersRandom] = React.useState(randomWords({ exactly: wordCount.current, maxLength: 5 }));
-  const [renderPage, setRenderPage] = React.useState(true);
-
   const sourceCode = "'Source Code Pro', monospace";
   const Comfortaa = "'Comfortaa', cursive";
   //Single letter is 14px
@@ -26,24 +23,12 @@ function TextPart(props, ref) {
     color: "#6e7779",
   };
 
-  const blink = keyframes`
-  0% {
-    opacity: 0;
-  }
-  50% {
-    opacity: 100;
-  }
-  100% {
-    opacity: 0;
-  }
-  
-`;
-
-  //Info about gama
+  //Info about game
+  const wordCount = React.useRef(50);
+  const [lettersRandom, setLettersRandom] = React.useState(randomWords({ exactly: wordCount.current, maxLength: 5 }));
   const [wordsTyped, setWordsTyped] = React.useState(0);
   const [wrongTypedLetters, setWrongTypedLetters] = React.useState([]);
 
-  const writeArray = lettersRandom;
   const letters = React.useRef([]);
   const [LettersToRender, setLettersToRender] = React.useState([]);
 
@@ -58,8 +43,8 @@ function TextPart(props, ref) {
   const nextRow = React.useRef(0);
   const rowsPassed = React.useRef(0);
   const linesPassed = React.useRef(1);
-  const currentWord = React.useRef();
-  const currentLetter = React.useRef();
+  const currentWord = React.useRef(null);
+  const currentLetter = React.useRef(null);
 
   const isWordEnded = React.useRef(false);
   const isPrevWordAllowed = React.useRef(false);
@@ -67,13 +52,13 @@ function TextPart(props, ref) {
 
   //Generate array here.
   React.useEffect(() => {
-    writeArray.forEach((element) => {
+    //Empty the arrays.
+    letters.current = [];
+
+    lettersRandom.forEach((element) => {
       var currentLetters = element.split("");
       letters.current.push(currentLetters);
     });
-
-    //Shuffle array
-    //letters.current = letters.current.sort((a, b) => 0.5 - Math.random());
 
     letters.current.forEach((element) => {
       var reMappedLetters = element.map((letter) => (
@@ -190,13 +175,39 @@ function TextPart(props, ref) {
 
   function onInputLostFocus() {
     console.log("input focus lost");
+
+    //Pause the current timer.
+    props.timeModule.pause();
     setIsFocused(false);
   }
 
   function onInputFocus() {
     console.log("input focus");
     refInput.current.focus();
+    //Resume the current timer.
+    props.timeModule.resume();
     setIsFocused(true);
+  }
+
+  function onGameTextPartRestart() {
+    setOffsetIndex(0);
+    setWordsTyped(0);
+    setLettersRandom(randomWords({ exactly: wordCount.current, maxLength: 5 }));
+    setLettersToRender([]);
+    indexOfIndex.current = 0;
+    indexOfWord.current = 0;
+    nextRow.current = 0;
+    rowsPassed.current = 0;
+    rowCalculation.current = 0;
+    linesPassed.current = 1;
+    currentWord.current = null;
+    currentLetter.current = null;
+    lastPressed.current = 1;
+    isWordEnded.current = false;
+    //Clear the input
+    refInput.current.value = "";
+    //Focus if there's problem.
+    onInputFocus();
   }
 
   const rowCalculation = React.useRef(0);
@@ -223,11 +234,13 @@ function TextPart(props, ref) {
   function handleAnswerChange(event) {
     //Don't accept input if game state stopped
     if (props.gameState == "stopped") return;
+
     //KeyPress for android
     var keyPressed = event.target.value.charAt(event.target.value.length - 1);
     keyPressed = lastPressed.current > event.target.value.length ? "<" : keyPressed;
     lastPressed.current = event.target.value.length;
     ////
+    console.log(lastPressed.current);
 
     var letterHTML = document.getElementById(`${indexOfWord.current}word`).children[indexOfIndex.current + 1];
     var parentElementHTML = letterHTML.parentElement;
@@ -243,7 +256,6 @@ function TextPart(props, ref) {
 
       //Calculate the next row.
       nextRow.current = calculateWordsInARow();
-
       if (indexOfWord.current == nextRow.current - 1 + rowCalculation.current) {
         //Move indexer to next row and next word.
         rowsPassed.current++;
@@ -341,7 +353,7 @@ function TextPart(props, ref) {
     },
   }));
 
-  //Variant anim.
+  //Variant anim for words.
   const container = {
     hidden: { opacity: 0 },
     show: {
@@ -357,9 +369,10 @@ function TextPart(props, ref) {
       onClick={onInputFocus}
       style={{
         display: "flex",
+        position: "relative",
         flexDirection: "column",
-        justifyContent: "flex-start",
-        alignItems: "flex-start",
+        justifyContent: "center",
+        alignItems: "center",
         marginBottom: "100px",
         height: "113px",
       }}
@@ -384,6 +397,7 @@ function TextPart(props, ref) {
       )}
       <input ref={refInput} onBlur={onInputLostFocus} type="text" style={{ position: "absolute", top: "0%", opacity: "0%", height: "20px" }} onChange={handleAnswerChange} />
       <Grid
+        layout
         key={LettersToRender}
         component={motion.div}
         initial="hidden"
@@ -420,6 +434,37 @@ function TextPart(props, ref) {
           style={{ margin: "0px", width: "2px", height: "30px", position: "absolute", backgroundColor: "#B0C4B1" }}
         />
       </Grid>
+      <IconButton
+        onClick={onGameTextPartRestart}
+        component={motion.div}
+        initial={{ scale: 0.9, rotate: 90 }}
+        animate={{
+          scale: [null, 1],
+          rotate: 0,
+        }}
+        transition={{
+          type: "spring",
+          damping: 5,
+          stiffness: 100,
+          restDelta: 0.001,
+          duration: 0.3,
+        }}
+        whileFocus={{ scale: 1.2, rotate: 90 }}
+        whileHover={{ scale: 1.1, rotate: 90 }}
+        whileTap={{ scale: 1.5, rotate: 270 }}
+        sx={{
+          position: "absolute",
+          height: "50px",
+          width: "50px",
+          borderRadius: "1000px",
+          bottom: "-80px",
+          color: "#B0C4B1",
+          "&:hover": { background: "rgba(176, 196, 177, 0.1)" },
+        }}
+        variant="text"
+      >
+        <RestartIcon />
+      </IconButton>
     </div>
   );
 }

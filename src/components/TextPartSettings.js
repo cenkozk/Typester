@@ -33,10 +33,14 @@ export default function Header() {
 
   const [selectedTime, setSelectedTime] = React.useState(35);
 
+  function setSelectedTimeFunc(num) {
+    setSelectedTime(num);
+  }
+
   return (
     <Stack
       component={motion.div}
-      initial={{ scale: 0.9 }}
+      initial={{ scale: 0.9, opacity: "0%" }}
       animate={{
         scale: [null, 0.95],
         opacity: ["0%", "100%"],
@@ -46,8 +50,7 @@ export default function Header() {
         damping: 5,
         stiffness: 100,
         restDelta: 0.001,
-        duration: 0.5,
-        delay: 0.25,
+        duration: 1,
       }}
       whileHover={{ scale: 1.0 }}
       direction="row"
@@ -65,9 +68,33 @@ export default function Header() {
     >
       <TimerIcon sx={{ color: "#4A5759", marginLeft: "5px", marginRight: "5px" }} />
       <Stack spacing={1} direction="row" sx={{ color: "#4A5759", marginLeft: "10px" }}>
-        <Typography sx={{ ...fontExo, opacity: selectedTime != 20 ? "50%" : "100%" }}>20</Typography>
-        <Typography sx={{ ...fontExo, opacity: selectedTime != 35 ? "50%" : "100%" }}>35</Typography>
-        <Typography sx={{ ...fontExo, opacity: selectedTime != 50 ? "50%" : "100%" }}>50</Typography>
+        <Typography
+          component={motion.div}
+          whileHover={{ scale: 1.1 }}
+          whileTap={{ scale: 0.9 }}
+          onClick={() => setSelectedTimeFunc(20)}
+          sx={{ ...fontExo, opacity: selectedTime != 20 ? "50%" : "100%" }}
+        >
+          20
+        </Typography>
+        <Typography
+          component={motion.div}
+          whileHover={{ scale: 1.1 }}
+          whileTap={{ scale: 1 }}
+          onClick={() => setSelectedTimeFunc(35)}
+          sx={{ ...fontExo, opacity: selectedTime != 35 ? "50%" : "100%" }}
+        >
+          35
+        </Typography>
+        <Typography
+          component={motion.div}
+          whileHover={{ scale: 1.1 }}
+          whileTap={{ scale: 1 }}
+          onClick={() => setSelectedTimeFunc(50)}
+          sx={{ ...fontExo, opacity: selectedTime != 50 ? "50%" : "100%" }}
+        >
+          50
+        </Typography>
       </Stack>
     </Stack>
   );
