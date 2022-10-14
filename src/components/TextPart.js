@@ -24,9 +24,12 @@ function TextPart(props, ref) {
   };
 
   //Info about game
-  const wordCount = React.useRef(50);
+  const wordCount = React.useRef(100);
+  const lastWordIndex = React.useRef(wordCount.current);
   const [lettersRandom, setLettersRandom] = React.useState(randomWords({ exactly: wordCount.current, maxLength: 5 }));
+  const [lastWordToAdd, setLastWordToAdd] = React.useState();
   const [wordsTyped, setWordsTyped] = React.useState(0);
+  const [lettersTyped, setLettersTyped] = React.useState(0);
   const [wrongTypedLetters, setWrongTypedLetters] = React.useState([]);
 
   const letters = React.useRef([]);
@@ -82,12 +85,14 @@ function TextPart(props, ref) {
   }, [lettersRandom]);
 
   React.useEffect(() => {
-    if (LettersToRender.length != wordCount.current) return;
+    if (LettersToRender.length != wordCount.current) {
+      console.log("return");
+      return;
+    }
     currentWord.current = LettersToRender[0];
     currentLetter.current = currentWord.current.props.children[indexOfIndex.current];
     nextRow.current = calculateWordsInARow();
     document.getElementById(`${indexOfWord.current}word`).prepend(refIndex.current);
-
     //Focus to input if there's problem
     refInput.current.focus();
   }, [LettersToRender]);
@@ -96,6 +101,11 @@ function TextPart(props, ref) {
   React.useEffect(() => {
     props.handleWordTyped(wordsTyped);
   }, [wordsTyped]);
+
+  //Handle typed letter count.
+  React.useEffect(() => {
+    props.handleLettersTyped(lettersTyped);
+  }, [lettersTyped]);
 
   function moveIndexerAnim() {
     if (!isFocused) setIsFocused(true);
@@ -110,8 +120,31 @@ function TextPart(props, ref) {
     moveIndexerAnim();
     currentLetter.current = currentWord.current.props.children[indexOfIndex.current];
 
+    //addAWordEndOfTheArrayAfterMove(); ----BUGGY AS FUCK....
     //Increase word typed
     setWordsTyped((prev) => prev + 1);
+  }
+
+  function addAWordEndOfTheArrayAfterMove() {
+    var word = randomWords({ exactly: 1, maxLength: 5 });
+    word = word[0];
+    var currentLetters = word.split("");
+    var reMappedLetters = [];
+    currentLetters.forEach((element) => {
+      reMappedLetters.push(
+        <letter data-istrue="false" style={{ ...fontStyle }}>
+          {element.toLowerCase()}
+        </letter>
+      );
+    });
+    setLettersToRender((prev) => [
+      ...prev,
+      <Box item id={`${lastWordIndex.current}word`} sx={{ margin: "0px", height: "30px" }}>
+        {reMappedLetters}
+      </Box>,
+    ]);
+    lastWordIndex.current = lastWordIndex.current + 1;
+    console.log(indexOfWord.current);
   }
 
   function returnToWord() {
@@ -178,14 +211,17 @@ function TextPart(props, ref) {
 
     //Pause the current timer.
     props.timeModule.pause();
+    props.openAnimsRemotely(true);
     setIsFocused(false);
   }
 
-  function onInputFocus() {
+  function onInputFocus(shouldOpenAnim) {
+    var animBool = typeof shouldOpenAnim == Boolean ? true : props.isAnimOpen;
     console.log("input focus");
     refInput.current.focus();
     //Resume the current timer.
     props.timeModule.resume();
+    props.openAnimsRemotely(animBool);
     setIsFocused(true);
   }
 
@@ -207,7 +243,9 @@ function TextPart(props, ref) {
     //Clear the input
     refInput.current.value = "";
     //Focus if there's problem.
-    onInputFocus();
+    props.idleTheGame();
+    onInputFocus(true);
+    props.openAnimsRemotely(true);
   }
 
   const rowCalculation = React.useRef(0);
@@ -240,7 +278,6 @@ function TextPart(props, ref) {
     keyPressed = lastPressed.current > event.target.value.length ? "<" : keyPressed;
     lastPressed.current = event.target.value.length;
     ////
-    console.log(lastPressed.current);
 
     var letterHTML = document.getElementById(`${indexOfWord.current}word`).children[indexOfIndex.current + 1];
     var parentElementHTML = letterHTML.parentElement;
@@ -296,6 +333,7 @@ function TextPart(props, ref) {
       moveToWord();
       refInput.current.value = "t";
       lastPressed.current = 1;
+      setLettersTyped((prev) => prev++);
       return;
     }
 
@@ -310,6 +348,7 @@ function TextPart(props, ref) {
         //Becuase we're on the last letter make wordEnded true.
         isWordEnded.current = true;
         returnToWord();
+        setLettersTyped((prev) => prev++);
         return;
       }
 
@@ -344,12 +383,13 @@ function TextPart(props, ref) {
       return;
     }
     //Move index 1 increment.
+    setLettersTyped((prev) => prev++);
     moveIndex();
   }
 
   useImperativeHandle(ref, () => ({
-    stopGame() {
-      console.log("text part stopped(not yet).");
+    restartGame() {
+      onGameTextPartRestart();
     },
   }));
 
@@ -358,6 +398,7 @@ function TextPart(props, ref) {
     hidden: { opacity: 0 },
     show: {
       opacity: 1,
+      filter: isFocused ? "blur(0px)" : "blur(5px)",
       transition: {
         staggerChildren: 0.015,
       },
@@ -397,11 +438,10 @@ function TextPart(props, ref) {
       )}
       <input ref={refInput} onBlur={onInputLostFocus} type="text" style={{ position: "absolute", top: "0%", opacity: "0%", height: "20px" }} onChange={handleAnswerChange} />
       <Grid
-        layout
         key={LettersToRender}
         component={motion.div}
         initial="hidden"
-        animate="show"
+        animate={"show"}
         transition={{
           delay: 0.5,
         }}
@@ -409,7 +449,6 @@ function TextPart(props, ref) {
         ref={refGrid}
         sx={{
           position: "relative",
-          filter: isFocused ? "blur(0px)" : "blur(5px)",
           height: "auto",
           overflow: "auto",
           gap: "10px 14px",
@@ -421,7 +460,6 @@ function TextPart(props, ref) {
         className="text-container"
         alignItems="flex-start"
       >
-        {LettersToRender}
         <div ref={refIndex} className="indexer" style={{ margin: "0px", width: "2px", height: "30px", position: "absolute", backgroundColor: "#B0C4B1", opacity: "0%" }} />
         <motion.div
           ref={refIndexer}
@@ -433,38 +471,41 @@ function TextPart(props, ref) {
           className="indexerVisual"
           style={{ margin: "0px", width: "2px", height: "30px", position: "absolute", backgroundColor: "#B0C4B1" }}
         />
+        {LettersToRender}
       </Grid>
       <IconButton
         onClick={onGameTextPartRestart}
         component={motion.div}
-        initial={{ scale: 0.9, rotate: 90 }}
+        initial={{ scale: 0, rotate: 180 }}
         animate={{
           scale: [null, 1],
           rotate: 0,
         }}
         transition={{
           type: "spring",
-          damping: 5,
+          damping: 7,
           stiffness: 100,
           restDelta: 0.001,
-          duration: 0.3,
+          duration: 0.5,
         }}
         whileFocus={{ scale: 1.2, rotate: 90 }}
         whileHover={{ scale: 1.1, rotate: 90 }}
-        whileTap={{ scale: 1.5, rotate: 270 }}
+        whileTap={{ scale: 1.4, rotate: 270 }}
         sx={{
           position: "absolute",
           height: "50px",
           width: "50px",
           borderRadius: "1000px",
-          bottom: "-80px",
+          bottom: "-100px",
           color: "#B0C4B1",
+          zIndex: 5,
           "&:hover": { background: "rgba(176, 196, 177, 0.1)" },
         }}
         variant="text"
       >
         <RestartIcon />
       </IconButton>
+      <Box sx={{ position: "absolute", opacity: "100%" }}>{lastWordToAdd}</Box>
     </div>
   );
 }

@@ -5,7 +5,7 @@ import { Dialog, IconButton, Stack, Typography, DialogActions, Button, DialogCon
 import InfoIcon from "@mui/icons-material/Info";
 import { motion } from "framer-motion";
 
-export default function Header() {
+export default function Header(props) {
   const exo2 = "'Exo 2', sans-serif";
   const fontExo = {
     fontFamily: exo2,
@@ -43,6 +43,7 @@ export default function Header() {
   };
 
   var link = <a href={"https://github.com/emirhanozk/Typester"}>GitHub link.</a>;
+  var isHeaderOpenStatus = props.isHeaderOpen;
 
   return (
     <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
@@ -60,23 +61,29 @@ export default function Header() {
         }}
         component={motion.div}
         initial={{ y: "-100%" }}
-        animate={{
-          y: "-30%",
-        }}
+        animate={
+          isHeaderOpenStatus
+            ? {
+                y: "-30%",
+              }
+            : {
+                y: "-120%",
+              }
+        }
         transition={{
           type: "spring",
           damping: 8,
           stiffness: 100,
           restDelta: 0.001,
           duration: 0.3,
-          delay: 0.5,
+          delay: !isHeaderOpenStatus ? 0 : 0.2,
           bounce: 0.25,
         }}
       >
         <Box
           className="leftPart"
           component={motion.div}
-          whileHover={{ scale: 1.1 }}
+          whileHover={{ scale: 1.05 }}
           transition={{
             type: "spring",
             damping: 5,

@@ -1,11 +1,9 @@
-import { Box } from "@mui/system";
 import React from "react";
 import { Divider, Stack, Typography } from "@mui/material";
-import SettingsIcon from "@mui/icons-material/Settings";
 import TimerIcon from "@mui/icons-material/Timer";
 import { motion } from "framer-motion";
 
-export default function Header() {
+export default function TextPartSettings(props) {
   const exo2 = "'Exo 2', sans-serif";
   const fontExo = {
     fontFamily: exo2,
@@ -18,39 +16,46 @@ export default function Header() {
     WebkitUserSelect: "none",
   };
 
-  const sourceCode = "'Source Code Pro', monospace";
-  const fontStyle = {
-    margin: "-0.18px",
-    userSelect: "none",
-    webkitUserSelect: "none",
-    fontFamily: "Source Code Pro",
-    fontStyle: "normal",
-    fontWeight: "500",
-    fontSize: "24px",
-    color: "#FFFFFFA5",
-    color: "#6e7779",
-  };
-
   const [selectedTime, setSelectedTime] = React.useState(35);
+  const didMount = React.useRef(false);
+
+  React.useEffect(() => {
+    //Do not rerender on initial load.
+    if (didMount.current == false) {
+      didMount.current = true;
+      return;
+    }
+    console.log(selectedTime);
+    props.changeTime(selectedTime);
+  }, [selectedTime]);
 
   function setSelectedTimeFunc(num) {
     setSelectedTime(num);
   }
 
+  var animStatus = props.isAnimOpen;
+
   return (
     <Stack
       component={motion.div}
       initial={{ scale: 0.9, opacity: "0%" }}
-      animate={{
-        scale: [null, 0.95],
-        opacity: ["0%", "100%"],
-      }}
+      animate={
+        animStatus
+          ? {
+              scale: [null, 0.95],
+              opacity: ["0%", "100%"],
+            }
+          : {
+              scale: [null, 0.9],
+              opacity: [null, "0%"],
+            }
+      }
       transition={{
         type: "spring",
         damping: 5,
         stiffness: 100,
         restDelta: 0.001,
-        duration: 1,
+        duration: 0.3,
       }}
       whileHover={{ scale: 1.0 }}
       direction="row"
@@ -62,7 +67,7 @@ export default function Header() {
         backgroundColor: "#B0C4B1",
         borderRadius: "1000px",
         alignItems: "center",
-        marginBottom: "30px",
+        marginBottom: "20px",
         boxShadow: "0px 5px 10px 5px rgba(0, 0, 0, 0.15)",
       }}
     >
@@ -90,10 +95,10 @@ export default function Header() {
           component={motion.div}
           whileHover={{ scale: 1.1 }}
           whileTap={{ scale: 1 }}
-          onClick={() => setSelectedTimeFunc(50)}
-          sx={{ ...fontExo, opacity: selectedTime != 50 ? "50%" : "100%" }}
+          onClick={() => setSelectedTimeFunc(60)}
+          sx={{ ...fontExo, opacity: selectedTime != 60 ? "60%" : "100%" }}
         >
-          50
+          60
         </Typography>
       </Stack>
     </Stack>
