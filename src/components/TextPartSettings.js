@@ -16,7 +16,7 @@ export default function TextPartSettings(props) {
     WebkitUserSelect: "none",
   };
 
-  const [selectedTime, setSelectedTime] = React.useState(35);
+  const [selectedTime, setSelectedTime] = React.useState(10);
   const didMount = React.useRef(false);
 
   React.useEffect(() => {
@@ -68,11 +68,29 @@ export default function TextPartSettings(props) {
         borderRadius: "1000px",
         alignItems: "center",
         marginBottom: "20px",
-        boxShadow: "0px 5px 10px 5px rgba(0, 0, 0, 0.15)",
+        boxShadow: "0 3px 6px rgba(0,0,0,0.16), 0 3px 6px rgba(0,0,0,0.23)",
       }}
     >
       <TimerIcon sx={{ color: "#4A5759", marginLeft: "5px", marginRight: "5px" }} />
       <Stack spacing={1} direction="row" sx={{ color: "#4A5759", marginLeft: "10px" }}>
+        <Typography
+          component={motion.div}
+          whileHover={{ scale: 1.1 }}
+          whileTap={{ scale: 0.9 }}
+          onClick={() => setSelectedTimeFunc(5)}
+          sx={{ ...fontExo, opacity: selectedTime != 5 ? "50%" : "100%" }}
+        >
+          5
+        </Typography>
+        <Typography
+          component={motion.div}
+          whileHover={{ scale: 1.1 }}
+          whileTap={{ scale: 0.9 }}
+          onClick={() => setSelectedTimeFunc(10)}
+          sx={{ ...fontExo, opacity: selectedTime != 10 ? "50%" : "100%" }}
+        >
+          10
+        </Typography>
         <Typography
           component={motion.div}
           whileHover={{ scale: 1.1 }}

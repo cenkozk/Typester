@@ -13,7 +13,7 @@ function App() {
   //Anim bools
   const [isAnimOpen, setIsAnimOpen] = React.useState(true);
 
-  const [timeLength, setTimeLength] = React.useState(35);
+  const [timeLength, setTimeLength] = React.useState(10);
   const [timeModule, setTimeModule] = React.useState(new TimerModule({ stopwatch: true }));
   const [time, setTime] = React.useState(0);
   const [gameState, setGameState] = React.useState("idle");
@@ -92,7 +92,6 @@ function App() {
   //Handle typed letters.
   function setLettersTypedFunc(count) {
     setLettersTyped(count);
-    console.log(count);
   }
 
   function changeTimeFunc(time) {
@@ -116,7 +115,7 @@ function App() {
           }}
           sx={{ width: "90%", maxWidth: "1200px" }}
         >
-          <Timer key={time} time={time} />
+          <Timer key={time} time={time} gameState={gameState} />
           <TextPart
             ref={gameRef}
             handleGameStart={startTheGame}
@@ -127,6 +126,7 @@ function App() {
             handleLettersTyped={setLettersTypedFunc}
             timeModule={timeModule}
             idleTheGame={idleTheGame}
+            timeLength={timeLength}
           />
           <Shortcuts />
         </Box>

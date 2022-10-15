@@ -29,7 +29,7 @@ export default function Timer(props) {
           restDelta: 0.001,
           duration: 0.25,
         }}
-        sx={{ ...fontStyle, marginBottom: "6px" }}
+        sx={{ ...fontStyle, marginBottom: "6px", opacity: props.gameState != "stopped" ? "100%" : "0%" }}
       >
         {props.time}
       </Typography>

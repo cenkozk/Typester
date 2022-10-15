@@ -103,12 +103,28 @@ export default function Header(props) {
         </Stack>
 
         <Dialog PaperProps={{ style: { borderRadius: "20px", backgroundColor: "#B0C4B1" } }} sx={{ backdropFilter: "blur(8px)" }} open={open} onClose={handleClose}>
-          <DialogTitle sx={{ ...fontStyle, color: "black", fontWeight: "800", fontSize: "24px" }}>{"Info.."}</DialogTitle>
+          <DialogTitle sx={{ ...fontStyle, color: "black", fontWeight: "800", fontSize: "24px" }}>
+            {<Box component="img" sx={{ width: "50px", height: "50px", borderRadius: "5px" }} src="/cat.gif"></Box>} Info..
+          </DialogTitle>
           <DialogContent>
-            <DialogContentText sx={{ ...fontStyle, fontWeight: "500", fontSize: "18px" }}>Typester, a monkeytype alike typing app. {link}</DialogContentText>
+            <DialogContentText sx={{ ...fontStyle, fontWeight: "500", fontSize: "18px" }}>Typester, a simple typing app. {link}</DialogContentText>
           </DialogContent>
           <DialogActions>
-            <Button sx={{ ...fontStyle, fontWeight: "500", fontSize: "18px", color: "black", marginRight: "10px" }} autoFocus onClick={handleClose}>
+            <Button
+              sx={{
+                ...fontExo,
+                fontWeight: "700",
+                fontSize: "18px",
+                color: "black",
+                marginRight: "10px",
+                zIndex: 5,
+                borderRadius: "25px",
+                textTransform: "none",
+                "&:hover": { background: "rgba(60,71,74,0.25)" },
+              }}
+              autoFocus
+              onClick={handleClose}
+            >
               Close
             </Button>
           </DialogActions>
