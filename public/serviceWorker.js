@@ -1,5 +1,5 @@
 let CACHE_NAME = "my-site-cache-v1";
-const urlsToCache = ["/", "/index.html"];
+const urlsToCache = ["/", "/index.html", "/static/css/main.a1fd9a17.css", "/static/js/main.021a251b.js", "/favicon.ico", "/manifest.json"];
 
 self.addEventListener("install", function (event) {
   // Perform install steps
