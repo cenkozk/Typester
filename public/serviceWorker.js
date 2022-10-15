@@ -1,5 +1,5 @@
 let CACHE_NAME = "my-site-cache-v1";
-const urlsToCache = ["/", "/index.html", "/static/css/main.a38874ba.css", "/static/js/main.4fac5097.js"];
+const urlsToCache = ["/", "/index.html"];
 
 self.addEventListener("install", function (event) {
   // Perform install steps
